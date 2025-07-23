@@ -1,29 +1,20 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+// Importa el componente 'Stack' desde 'expo-router'.
+// Este componente se utiliza para manejar la navegación tipo pila (stack navigation),
+// es decir, navegar de una pantalla a otra apilándolas como en un historial.
+import { Stack } from "expo-router";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
+// Define el componente RootLayout, que es el layout raíz de la aplicación.
+// Expo Router buscará automáticamente este componente en '/app/_layout.tsx'
+// para definir cómo se estructura la navegación general de la app.
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
-
+  // Retorna un componente <Stack /> vacío, lo que le dice a Expo Router
+  // que todas las rutas (archivos .tsx dentro de /app) deben manejarse
+  // como pantallas dentro de un Stack Navigator.
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false, // Oculta la barra superior en todas las pantallas
+      }}
+    />
   );
 }
