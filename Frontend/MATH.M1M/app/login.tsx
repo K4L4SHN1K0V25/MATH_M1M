@@ -9,7 +9,7 @@ export default function LoginScreen() {
       {/* Logo */}
       <Image
         source={{
-          uri: 'https://cdn-icons-png.flaticon.com/512/4422/4422104.png',
+          uri: 'https://cdn-icons-png.flaticon.com/512/3004/3004298.png',
         }}
         style={styles.logo}
         resizeMode="contain"
@@ -19,7 +19,7 @@ export default function LoginScreen() {
       <Text style={styles.title}>MATE APP</Text>
 
       {/* Botones */}
-      <TouchableOpacity style={styles.button} onPress={() => router.replace("/(tabs)/inicio")}>
+      <TouchableOpacity style={styles.button} onPress={() => router.replace("/inicio")}>
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
 
