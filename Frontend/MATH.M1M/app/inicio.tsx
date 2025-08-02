@@ -39,7 +39,7 @@ export default function HomeScreen() {
         <Text style={styles.link}>¿No tienes cuenta? Crea una aquí.</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.registerButton} onPress={() => router.replace("/(tabs)/home")}>
+      <TouchableOpacity style={styles.registerButton} onPress={() => router.replace("/bienvenida")}>
         <Text style={styles.registerButtonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
     </View>
