@@ -4,7 +4,7 @@ import { View, Text, Image, StyleSheet, ScrollView } from "react-native";
 export default function HomeScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Selecciona tu materia</Text>
+      <Text style={styles.title}>Selecciona tu materia:</Text>
 
       {/* Opción: Matemáticas */}
       <View style={styles.subjectItem}>
