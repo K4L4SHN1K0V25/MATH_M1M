@@ -1,63 +1,88 @@
-# Importamos FastAPI desde el paquete fastapi
-from fastapi import FastAPI
-# Importamos códigos de estado HTTP para mejorar la legibilidad
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT
-# Importamos la clase para la conexión con la base de datos
+from passlib.context import CryptContext
+from jose import jwt
 from .model.userConnection import userConnection
-# Importamos el esquema del usuario para validar los datos
-from .schema.userSchema import UserSchema
-from fastapi import Response  # Importamos Response para enviar respuestas vacías con status code
+from .schema.userSchema import UserSchema, LoginData
+from fastapi.middleware.cors import CORSMiddleware
 
-# Creamos una instancia de la aplicación FastAPI con metadatos opcionales
+SECRET_KEY = "mi_clave_secreta"
+ALGORITHM = "HS256"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
-# Instanciamos la clase de conexión a la base de datos
 conn = userConnection()
 
-# Definimos una ruta raíz "/" que responderá a solicitudes GET
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # O pon la IP de tu app, ej: ["http://localhost:8081"]
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos (incluye OPTIONS)
+    allow_headers=["*"],  # Permite todos los encabezados
+)
+
+# ---------------------- CRUD ----------------------
 @app.get("/", status_code=HTTP_200_OK)
-async def root():
-    items = []  # Lista que contendrá todos los usuarios en forma de diccionario
-    for data in conn.read_all():  # Itera sobre todos los registros obtenidos de la base de datos
-        dictionary = {}  # Crea un diccionario vacío por cada registro
-        dictionary["id"] = data[0]  # Asigna el id
-        dictionary["nombre"] = data[1]  # Asigna el nombre
-        dictionary["email"] = data[2]  # Asigna el email
-        dictionary["contraseña"] = data[3]  # Asigna la contraseña
-        items.append(dictionary)  # Agrega el diccionario a la lista de resultados
+def root():
+    items = []
+    for data in conn.read_all():
+        items.append({
+            "id": data[0],
+            "nombre": data[1],
+            "email": data[2],
+            "contraseña": data[3]
+        })
+    return items
 
-    return items  # Devuelve la lista de usuarios
-
-# Ruta para obtener un solo usuario por su ID
 @app.get("/api/usuario/{id}", status_code=HTTP_200_OK)
 def get_one(id: str):
-    dictionary = {}  # Diccionario para almacenar un solo usuario
-    data = conn.read_one(id)  # Llama al método que obtiene un usuario por ID
-    dictionary["id"] = data[0]
-    dictionary["nombre"] = data[1]
-    dictionary["email"] = data[2]
-    dictionary["contraseña"] = data[3]
+    data = conn.read_one(id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return {
+        "id": data[0],
+        "nombre": data[1],
+        "email": data[2],
+        "contraseña": data[3]
+    }
 
-    return dictionary  # Devuelve el usuario como un diccionario
-
-# Ruta para insertar un nuevo usuario
 @app.post("/api/insert", status_code=HTTP_201_CREATED)
 def insert(user_data: UserSchema):
-    data = user_data.dict()  # Convierte el objeto Pydantic en diccionario
-    data.pop("id")  # Elimina el id porque se genera automáticamente
-    #print(data)  # Imprime los datos por depuración (puede quitarse en producción)
-    conn.write(data)  # Llama al método para insertar en la base de datos
-    return Response(status_code=HTTP_201_CREATED)  # Devuelve una respuesta vacía con código 201
+    data = user_data.dict()
+    data.pop("id", None)
+    conn.write(data)
+    return Response(status_code=HTTP_201_CREATED)
 
-# Ruta para actualizar un usuario existente
 @app.put("/api/update/{id}", status_code=HTTP_204_NO_CONTENT)
 def update(user_data: UserSchema, id: str):
-    data = user_data.dict()  # Convierte los datos recibidos a diccionario
-    data["id"] = id  # Asigna el id recibido por URL al diccionario
-    conn.update(data)  # Actualiza el registro en la base de datos
-    return Response(status_code=HTTP_204_NO_CONTENT)  # Devuelve respuesta vacía con código 204
+    data = user_data.dict()
+    data["id"] = id
+    conn.update(data)
+    return Response(status_code=HTTP_204_NO_CONTENT)
 
-# Ruta para eliminar un usuario por su ID
 @app.delete("/api/deleteUsuario/{id}", status_code=HTTP_204_NO_CONTENT)
 def delete(id: str):
-    conn.delete(id)  # Llama al método para eliminar el usuario
-    return Response(status_code=HTTP_204_NO_CONTENT)  # Devuelve respuesta vacía con código 204
+    conn.delete(id)
+    return Response(status_code=HTTP_204_NO_CONTENT)
+
+# ---------------------- AUTH ----------------------
+@app.post("/register", status_code=HTTP_201_CREATED)
+def register(user_data: UserSchema):
+    data = user_data.dict()
+    data.pop("id", None)
+    data["contraseña"] = pwd_context.hash(data["contraseña"])
+    conn.write(data)
+    return {"message": "Usuario registrado correctamente"}
+
+@app.post("/login")
+def login(user_data: LoginData):
+    users = conn.read_all()
+    user = next((u for u in users if u[2] == user_data.email), None)
+    if not user or user_data.contraseña != user[3]:
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+
+    token = jwt.encode({"sub": user[2]}, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": token, "token_type": "bearer"}
+
