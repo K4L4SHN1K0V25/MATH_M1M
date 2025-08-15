@@ -6,3 +6,7 @@ class UserSchema(BaseModel):  # Define un esquema de datos llamado UserSchema
     nombre: str  # Campo obligatorio tipo string para el nombre
     email: str  # Campo obligatorio tipo string para el email
     contraseña: str  # Campo obligatorio tipo string para la contraseña
+
+class LoginData(BaseModel):
+    email: str
+    contraseña: str
