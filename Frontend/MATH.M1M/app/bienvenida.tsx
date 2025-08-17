@@ -1,9 +1,26 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function BienvenidaScreen() {
   const router = useRouter();
+  const [username, setUsername] = useState("Usuario");
+
+  useEffect(() => {
+    loadUsername();
+  }, []);
+
+  const loadUsername = async () => {
+    try {
+      const savedUsername = await AsyncStorage.getItem('username');
+      if (savedUsername) {
+        setUsername(savedUsername);
+      }
+    } catch (error) {
+      console.log('Error loading username:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -27,7 +44,7 @@ export default function BienvenidaScreen() {
         <Text style={styles.appTitle}>MATE APP</Text>
 
         {/* Mensaje de bienvenida */}
-        <Text style={styles.welcomeMessage}>¡Bienvenido de nuevo Juanito!</Text>
+        <Text style={styles.welcomeMessage}>¡Bienvenido de nuevo {username}!</Text>
       </View>
 
       {/* Botón de navegación al menú */}
